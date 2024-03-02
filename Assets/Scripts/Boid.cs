@@ -9,7 +9,6 @@ public class Boid : MonoBehaviour
     public Vector2 pos;
     public Vector2 force;
 
-
     // Accumulate force
     // Every update the BoidManager uses the Boid's force then wipes it to zero
     public void AddForce(Vector2 f)
@@ -32,11 +31,24 @@ public class Boid : MonoBehaviour
         // If there are nearby Boids
         if (nearby.Count > 0)
         {
-            // Do flocking processing here
-            Vector2 cohesionForce = Cohesion(nearby);
+            if (BoidManager.instance.boidEnableCohesion)
+            {
+                // Do Cohesion processing here
+                Vector2 cohesionForce = Cohesion(nearby);
+                AddForce(cohesionForce);
+            }
 
-            AddForce(cohesionForce);
+            if (BoidManager.instance.boidEnableSeparation)
+            {
+                //Do Seperation Logic
+                Vector2 sepForce = Seperation(nearby);
+                AddForce(sepForce);
+            }
 
+            if (BoidManager.instance.boidEnableAlignment)
+            {
+                //Do Alignment Logic
+            }
         }
 
     }
@@ -55,5 +67,30 @@ public class Boid : MonoBehaviour
         Vector2 newDir = (avgPos - pos).normalized;
 
         return newDir * BoidManager.instance.boidStrengthCohesion;
+    }
+
+    private Vector2 Seperation(List<Boid> nearbyBoids)
+    {
+        Vector2 sepForce = Vector2.zero;
+
+        foreach(var boid in nearbyBoids)
+        {
+            Vector2 spaceBetween = pos - boid.pos;
+
+            float distance = spaceBetween.magnitude;
+            if(distance > 0)
+            {
+                spaceBetween /= distance * distance;
+            }
+
+            sepForce += spaceBetween;
+        }
+
+        if(nearbyBoids.Count > 0)
+        {
+            sepForce /= nearbyBoids.Count;
+        }
+
+        return sepForce * BoidManager.instance.boidStrengthSeparation;
     }
 }
