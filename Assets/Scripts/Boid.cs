@@ -9,6 +9,7 @@ public class Boid : MonoBehaviour
     public Vector2 pos;
     public Vector2 force;
 
+
     // Accumulate force
     // Every update the BoidManager uses the Boid's force then wipes it to zero
     public void AddForce(Vector2 f)
@@ -32,7 +33,27 @@ public class Boid : MonoBehaviour
         if (nearby.Count > 0)
         {
             // Do flocking processing here
+            Vector2 cohesionForce = Cohesion(nearby);
+
+            AddForce(cohesionForce);
+
         }
 
+    }
+
+    private Vector2 Cohesion(List<Boid> nearbyBoids)
+    {
+        Vector2 avgPos = Vector2.zero;
+
+        foreach (var boid in nearbyBoids)
+        {
+            avgPos += boid.pos;
+        }
+
+        avgPos /= nearbyBoids.Count;
+
+        Vector2 newDir = (avgPos - pos).normalized;
+
+        return newDir * BoidManager.instance.boidStrengthCohesion;
     }
 }
