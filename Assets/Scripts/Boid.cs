@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static BoidManager;
 
 public class Boid : MonoBehaviour
 {
@@ -51,6 +52,49 @@ public class Boid : MonoBehaviour
             }
         }
 
+        if (BoidManager.instance.edge == EdgeBehavior.Collide)
+        {
+            AvoidEdge();
+        }
+    }
+    private float CalculateAvoidanceForce(float distanceFromNearEdge, float distanceFromFarEdge)
+    {
+        float avoidanceForce = 0.0f;
+        float avoidanceRadius = 10.0f; // Adjust this value as needed
+
+        // Check if boid is close to the near edge
+        if (distanceFromNearEdge < avoidanceRadius)
+        {
+            // Calculate avoidance force proportional to the distance from the near edge
+            avoidanceForce += Mathf.Clamp01(1.0f - (distanceFromNearEdge / avoidanceRadius));
+        }
+
+        // Check if boid is close to the far edge
+        if (distanceFromFarEdge < avoidanceRadius)
+        {
+            // Calculate avoidance force proportional to the distance from the far edge
+            avoidanceForce -= Mathf.Clamp01(1.0f - (distanceFromFarEdge / avoidanceRadius));
+        }
+
+        return avoidanceForce;
+    }
+
+    private void AvoidEdge()
+    {
+        Vector2 avoidanceForce = Vector2.zero;
+
+        // Calculate distance from each edge
+        float distanceToLeftEdge = pos.x;
+        float distanceToRightEdge = BoidManager.instance.worldSize.x - pos.x;
+        float distanceToBottomEdge = pos.y;
+        float distanceToTopEdge = BoidManager.instance.worldSize.y - pos.y;
+
+        // Calculate avoidance force based on distance to each edge
+        avoidanceForce.x = CalculateAvoidanceForce(distanceToLeftEdge, distanceToRightEdge);
+        avoidanceForce.y = CalculateAvoidanceForce(distanceToBottomEdge, distanceToTopEdge);
+
+        // Apply avoidance force
+        force += avoidanceForce.normalized * BoidManager.instance.boidSpeed * BoidManager.instance.boidStrengthAvoidance;
     }
 
     private Vector2 Cohesion(List<Boid> nearbyBoids)

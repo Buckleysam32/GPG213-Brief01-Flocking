@@ -32,12 +32,15 @@ public class BoidManager : MonoBehaviour
     public float boidStrengthSeparation = 1.0f;
     public float boidStrengthCohesion = 1.0f;
     public float boidStrengthAlignment = 1.0f;
+    public float boidStrengthAvoidance = 1;
+    public bool boidEnableStrengthAvoidance = true;
 
     [Header("Debug")]
     public bool debugRanges = false;
     public bool debugNearby = false;
     public bool debugSelected = false;
 
+    
     private void Awake()
     {
         // Store the singleton reference
