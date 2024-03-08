@@ -10,6 +10,8 @@ public class Boid : MonoBehaviour
     public Vector2 pos;
     public Vector2 force;
 
+    public Collider2D squareCollider;
+
     // Accumulate force
     // Every update the BoidManager uses the Boid's force then wipes it to zero
     public void AddForce(Vector2 f)
@@ -22,6 +24,8 @@ public class Boid : MonoBehaviour
     {
         // Store the Boid's transform position into it's pos
         pos = transform.position;
+
+        squareCollider = GameObject.Find("Square").GetComponent<Collider2D>();
     }
 
     // Update is called once per frame
@@ -48,7 +52,8 @@ public class Boid : MonoBehaviour
 
             if (BoidManager.instance.boidEnableAlignment)
             {
-                //Do Alignment Logic
+                Vector2 alignForce = Alignment(nearby);
+                AddForce(alignForce);
             }
         }
 
@@ -56,23 +61,25 @@ public class Boid : MonoBehaviour
         {
             AvoidEdge();
         }
+
+        AvoidCollider();
     }
+
+
+
     private float CalculateAvoidanceForce(float distanceFromNearEdge, float distanceFromFarEdge)
     {
         float avoidanceForce = 0.0f;
-        float avoidanceRadius = 10.0f; // Adjust this value as needed
+        float avoidanceRadius = 10.0f; 
 
-        // Check if boid is close to the near edge
+        
         if (distanceFromNearEdge < avoidanceRadius)
         {
-            // Calculate avoidance force proportional to the distance from the near edge
             avoidanceForce += Mathf.Clamp01(1.0f - (distanceFromNearEdge / avoidanceRadius));
         }
 
-        // Check if boid is close to the far edge
         if (distanceFromFarEdge < avoidanceRadius)
         {
-            // Calculate avoidance force proportional to the distance from the far edge
             avoidanceForce -= Mathf.Clamp01(1.0f - (distanceFromFarEdge / avoidanceRadius));
         }
 
@@ -95,6 +102,27 @@ public class Boid : MonoBehaviour
 
         // Apply avoidance force
         force += avoidanceForce.normalized * BoidManager.instance.boidSpeed * BoidManager.instance.boidStrengthAvoidance;
+    }
+
+    private void AvoidCollider()
+    {
+        Vector2 avoidForce = Vector2.zero;
+
+        if (squareCollider != null)
+        {
+            Vector2 closestPoint = squareCollider.ClosestPoint(pos);
+            float distance = Vector2.Distance(pos, closestPoint);
+            float avoidanceRadius = 5.0f; 
+
+            
+            if (distance < avoidanceRadius)
+            {
+                
+                avoidForce = (pos - closestPoint).normalized;
+            }
+        }
+
+        force += avoidForce * BoidManager.instance.boidStrengthAvoidance;
     }
 
     private Vector2 Cohesion(List<Boid> nearbyBoids)
@@ -136,5 +164,23 @@ public class Boid : MonoBehaviour
         }
 
         return sepForce * BoidManager.instance.boidStrengthSeparation;
+    }
+
+    private Vector2 Alignment(List<Boid> nearbyBoids)
+    {
+        Vector2 avgVel = Vector2.zero;
+
+        foreach(var boid in nearbyBoids)
+        {
+            avgVel += boid.vel;
+        }
+
+        avgVel /= nearbyBoids.Count;
+
+        Vector2 newDir = avgVel.normalized;
+
+        Vector2 alignForce = (newDir - vel.normalized) * BoidManager.instance.boidStrengthAlignment;
+
+        return alignForce;
     }
 }
